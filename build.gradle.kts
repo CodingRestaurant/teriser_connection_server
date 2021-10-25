@@ -14,10 +14,11 @@ repositories {
 dependencies {
 
     implementation (group= "io.netty", name="netty-all", version= "4.1.24.Final")
+    implementation (group= "io.github.microutils", name= "kotlin-logging-jvm", version= "2.0.6")
 
     testImplementation ("org.junit.jupiter:junit-jupiter-api:5.7.0")
     testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine:5.7.0")
-    implementation("org.slf4j:slf4j-api:1.7.32")
+
 
     implementation ("com.sparkjava:spark-kotlin:1.0.0-alpha")
 
