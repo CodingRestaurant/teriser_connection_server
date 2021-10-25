@@ -1,10 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.5.3"
-    id("io.spring.dependency-management") version "1.0.11.RELEASE"
     kotlin("jvm") version "1.6.0-RC"
-    kotlin("plugin.spring") version "1.6.0-RC"
 }
 
 group "com.codrest"
@@ -16,11 +13,13 @@ repositories {
 
 dependencies {
 
-    implementation (group= "org.springframework.boot", name= "spring-boot-starter", version= "2.5.3")
     implementation (group= "io.netty", name="netty-all", version= "4.1.24.Final")
 
     testImplementation ("org.junit.jupiter:junit-jupiter-api:5.7.0")
     testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine:5.7.0")
+    implementation("org.slf4j:slf4j-api:1.7.32")
+
+    implementation ("com.sparkjava:spark-kotlin:1.0.0-alpha")
 
     compileOnly ("org.projectlombok:lombok:1.18.12")
     annotationProcessor ("org.projectlombok:lombok:1.18.12")
@@ -40,7 +39,4 @@ compileKotlin.kotlinOptions {
 val compileTestKotlin: KotlinCompile by tasks
 compileTestKotlin.kotlinOptions {
     jvmTarget = "1.8"
-}
-springBoot {
-    mainClass.set("com.codrest.teriser.connectionserver.TeriserConnectionServerApplicationKt")
 }
