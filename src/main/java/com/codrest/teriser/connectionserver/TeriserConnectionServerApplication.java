@@ -3,7 +3,7 @@
  * Filename : TeriserConnectionServerApplication
  * Desc :
  */
-package com.codrest;
+package com.codrest.teriser.connectionserver;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
