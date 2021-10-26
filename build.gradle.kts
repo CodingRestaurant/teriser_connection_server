@@ -14,7 +14,13 @@ repositories {
 dependencies {
 
     implementation (group= "io.netty", name="netty-all", version= "4.1.24.Final")
+
+    implementation (platform("io.projectreactor:reactor-bom:2020.0.12"))
+    implementation ("io.projectreactor.netty:reactor-netty-core")
+    implementation ("io.projectreactor.netty:reactor-netty-http")
+
     implementation (group= "io.github.microutils", name= "kotlin-logging-jvm", version= "2.0.6")
+
 
     testImplementation ("org.junit.jupiter:junit-jupiter-api:5.7.0")
     testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine:5.7.0")
