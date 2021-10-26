@@ -13,14 +13,11 @@ repositories {
 
 dependencies {
 
-    implementation (group= "io.netty", name="netty-all", version= "4.1.24.Final")
+    implementation ("com.google.code.gson:gson:2.8.8")
 
     implementation (platform("io.projectreactor:reactor-bom:2020.0.12"))
     implementation ("io.projectreactor.netty:reactor-netty-core")
     implementation ("io.projectreactor.netty:reactor-netty-http")
-
-    implementation (group= "io.github.microutils", name= "kotlin-logging-jvm", version= "2.0.6")
-
 
     testImplementation ("org.junit.jupiter:junit-jupiter-api:5.7.0")
     testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine:5.7.0")
@@ -34,6 +31,7 @@ dependencies {
     testAnnotationProcessor ("org.projectlombok:lombok:1.18.12")
     implementation(kotlin("stdlib-jdk8"))
 
+    testCompileOnly("org.slf4j:slf4j-simple:1.7.29")
 }
 
 tasks.withType<Test> {
