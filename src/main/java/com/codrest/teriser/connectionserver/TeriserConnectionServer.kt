@@ -6,17 +6,22 @@
 package com.codrest.teriser.connectionserver
 
 import com.codrest.teriser.connectionserver.handler.socket.SocketHandler
+import java.nio.file.Files
+import java.nio.file.Path
 
 
+class TeriserConnectionServer {
 
-class TeriserConnectionServer{
-
-    companion object{
+    companion object {
         val serverAddress = "http://teriser.codrest.com/connection/project"
+        val credentialPath = Path.of("src/main/resources/CERT/Credential")
     }
+
     fun start() {
-        SocketHandler()
+        val credentials = Files.readAllLines(credentialPath)
+        SocketHandler(credentials[0])
     }
+
 
 }
 

@@ -13,8 +13,6 @@ import com.google.gson.JsonParser
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpHeaders
-import reactor.core.publisher.Mono
-import reactor.netty.ByteBufFlux
 import reactor.netty.http.client.HttpClient
 import spark.Spark
 import java.util.*
@@ -31,52 +29,79 @@ class HttpEndpointHandler {
                 root.remove("Token")
                 var listofcommand = ""
                 val commandList:MutableList<String> = mutableListOf()
-                for (mutableEntry in root.entrySet()) {
-                    println("Establish endpoint /$projectName/${mutableEntry.key}")
-                    commandList.add(mutableEntry.key)
+                println(root)
+                println(root.size())
 
-                    Spark.get("/$projectName/${mutableEntry.key}") { request, response ->
-                        response.type("application/json")
-                        response.status(200)
-                        mutableEntry.value.toString()
-                    }
+                val apis = root["apis"].asJsonArray
+                val types = root["types"].asJsonArray
 
-                    Spark.post("/$projectName/${mutableEntry.key}") { request, response ->
-                        val requestMessage = JsonParser.parseString(request.body().toString()).asJsonObject
-                        val requestParams = requestMessage["Parameters"].asJsonArray
-                        val parameters = JsonArray()
-                        println(requestParams)
-                        val reservedParameters = mutableEntry.value.asJsonObject["parameters"].asJsonArray
-
-                        for (i in 0 until reservedParameters.size()){
-                            //ith request param
-                            parameters.add(requestParams.get(i))
-                        }
-
-                        val executor = JsonObject()
-                        executor.addProperty("method",mutableEntry.key)
-                        executor.add("parameters",parameters)
-
-                        response.type("application/json")
-
-                        val res:String? = SocketHandler.executeMethod(projectName,executor.toString())
-                        if(res != null){
-                            response.status(200)
-                            res
-                        }else{
-                            removeEndpoints(projectName)
-                            Spark.halt(404)
-                        }
-                    }
-
-                    listofcommand += "<br>{${mutableEntry.key} }"
+                println(apis)
+                println(types)
+                listofcommand += "Available Apis"
+                for (api in apis) {
+                    val apiInfo = api.asJsonObject
+                    println(api)
+                    val apiName = apiInfo.keySet().iterator().next()
+                    val apiParameters = apiInfo[apiName].asJsonObject
+                    registerGetEndpoint(
+                        "/$projectName/${apiName}",
+                        apiParameters.toString()
+                    )
+                    registerPostEndpoint(projectName, apiName,
+                        apiParameters.getAsJsonArray("parameters"))
+                    listofcommand += "\n$apiName"
                 }
-                Spark.get("/$projectName") { request, response ->
-                    print(request.ip())
-                    "List of $projectName's command$listofcommand"
+
+                listofcommand += "\n"
+                listofcommand += "\n"
+                listofcommand += "DataTypes"
+
+                for (type in types) {
+                    listofcommand += "\n$type"
                 }
+
+                registerGetEndpoint("/$projectName",listofcommand)
 
                 routeMap[projectName] = commandList
+            }
+        }
+
+        private fun registerGetEndpoint(path:String, targetResponse:String){
+            println("registered get endpoint : {$path}")
+            Spark.get(path) { _, response ->
+                response.type("application/json")
+                response.status(200)
+                targetResponse
+            }
+        }
+
+        private fun registerPostEndpoint(projectName: String, apiName:String, reservedParameters:JsonArray){
+            println("registered Post endpoint : {/$projectName/${apiName}}")
+            Spark.post("/$projectName/${apiName}") { request, response ->
+                val requestMessage = JsonParser.parseString(request.body().toString()).asJsonObject
+                val requestParams = requestMessage["Parameters"].asJsonArray
+                val parameters = JsonArray()
+                println("Post Request : $requestParams")
+                println(request.ip())
+                for (i in 0 until reservedParameters.size()){
+                    //ith request param
+                    parameters.add(requestParams.get(i))
+                }
+
+                val executor = JsonObject()
+                executor.addProperty("method",apiName)
+                executor.add("parameters",parameters)
+
+                response.type("application/json")
+                //Concurrent problem? need check
+                val res:String? = SocketHandler.executeMethod(projectName,executor.toString())
+                if(res != null){
+                    response.status(200)
+                    res
+                }else{
+                    removeEndpoints(projectName)
+                    Spark.halt(404)
+                }
             }
         }
 
@@ -97,8 +122,7 @@ class HttpEndpointHandler {
                     headers[HttpHeaderNames.CONTENT_TYPE] = HttpHeaderValues.APPLICATION_JSON
                 }
                 .delete()
-                .uri(TeriserConnectionServer.serverAddress)
-                .send(ByteBufFlux.fromString(Mono.just(projectName)))
+                .uri("${TeriserConnectionServer.serverAddress}?projectName")
                 .response().subscribe()
         }
 
