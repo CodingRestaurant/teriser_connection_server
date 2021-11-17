@@ -6,8 +6,7 @@
 package com.codrest.teriser.connectionserver.handler.socket
 
 import com.codrest.teriser.connectionserver.TeriserConnectionServer
-import com.codrest.teriser.connectionserver.handler.http.HttpEndpointHandler.Companion.registerEndpoint
-import com.codrest.teriser.connectionserver.handler.http.HttpEndpointHandler.Companion.removeEndpoints
+import com.codrest.teriser.connectionserver.handler.http.HttpEndpointHandler
 import java.util.HashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import com.google.gson.JsonObject
@@ -31,6 +30,7 @@ class SocketHandler(private val serverToken: String) {
     private val isServiceActive = AtomicBoolean()
 
     private lateinit var serverSocketChannel: ServerSocketChannel
+    private val httpEndpointHandler: HttpEndpointHandler
 
     companion object{
         private val tokens: MutableMap<String, String> = HashMap()
@@ -73,6 +73,7 @@ class SocketHandler(private val serverToken: String) {
 
     init {
         isServiceActive.set(true)
+        httpEndpointHandler = HttpEndpointHandler()
         activateConnectionServer()
     }
 
@@ -138,14 +139,14 @@ class SocketHandler(private val serverToken: String) {
         val projectName =
             JsonParser.parseString(projectObject).asJsonObject["response"].asString.replace("\"", "")
         tokens[token] = projectName
-        registerEndpoint(serverToken, projectName, root)
+        httpEndpointHandler.registerEndpoint(serverToken, projectName, root)
         channels[projectName] = channel
     }
 
     private fun checkExistConnection(token:String) : Boolean{
         val alreadyConnectedChannel = tokens[token]
         if(alreadyConnectedChannel != null){
-            removeEndpoints(alreadyConnectedChannel, serverToken)
+            httpEndpointHandler.removeEndpoints(alreadyConnectedChannel, serverToken)
 
             //expire pre-connection
             val prechannel = channels[alreadyConnectedChannel]!!

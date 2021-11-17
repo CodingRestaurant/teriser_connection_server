@@ -14,7 +14,7 @@ class TeriserConnectionServer {
 
     companion object {
         val serverEndpoint = "http://teriser.codrest.com/connection/project"
-        val credentialPath = Path.of("src/main/resources/CERT/Credential")
+        val credentialPath = Path.of("CERT/Credential")
     }
 
     fun start() {
