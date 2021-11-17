@@ -85,7 +85,6 @@ class SocketHandler(private val serverToken: String) {
             while (isServiceActive.get()) {
                 try {
                     val channel = serverSocketChannel.accept()
-                    println("Received connection : ${channel.socket().inetAddress}")
                     val root = extractFirstJsonFromClient(channel)
                     val token = root["Token"].toString().replace("\"", "")
 
@@ -98,14 +97,13 @@ class SocketHandler(private val serverToken: String) {
                     val tokenObject = JsonObject()
                     tokenObject.addProperty("Token", token)
                     tokenObject.addProperty("ServerToken", serverToken)
-                    println("Request Token validation")
 
                     HttpClient.create()
                         .headers { headers: HttpHeaders ->
                             headers[HttpHeaderNames.CONTENT_TYPE] = HttpHeaderValues.APPLICATION_JSON
                         }
                         .post()
-                        .uri(TeriserConnectionServer.serverAddress)
+                        .uri(TeriserConnectionServer.serverEndpoint)
                         .send(ByteBufFlux.fromString(Mono.just(tokenObject.toString())))
                         .responseContent().aggregate().asString().subscribe { establishEndpoints(it,channel,root,token)}
 
@@ -114,7 +112,7 @@ class SocketHandler(private val serverToken: String) {
                     e.printStackTrace()
                 }
             }
-            
+
             //cleanup
         } catch (e: IOException) {
             e.printStackTrace()
@@ -139,17 +137,15 @@ class SocketHandler(private val serverToken: String) {
 
         val projectName =
             JsonParser.parseString(projectObject).asJsonObject["response"].asString.replace("\"", "")
-        println(projectName)
         tokens[token] = projectName
-        registerEndpoint(projectName, root)
+        registerEndpoint(serverToken, projectName, root)
         channels[projectName] = channel
     }
-
 
     private fun checkExistConnection(token:String) : Boolean{
         val alreadyConnectedChannel = tokens[token]
         if(alreadyConnectedChannel != null){
-            removeEndpoints(alreadyConnectedChannel)
+            removeEndpoints(alreadyConnectedChannel, serverToken)
 
             //expire pre-connection
             val prechannel = channels[alreadyConnectedChannel]!!

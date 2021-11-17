@@ -13,7 +13,7 @@ import java.nio.file.Path
 class TeriserConnectionServer {
 
     companion object {
-        val serverAddress = "http://teriser.codrest.com/connection/project"
+        val serverEndpoint = "http://teriser.codrest.com/connection/project"
         val credentialPath = Path.of("src/main/resources/CERT/Credential")
     }
 

@@ -23,24 +23,19 @@ class HttpEndpointHandler {
         private val routeMap: MutableMap<String, List<String>> = hashMapOf()
 
         //when establish socket connection
-        fun registerEndpoint(projectName:String, root:JsonObject) {
+        fun registerEndpoint(serverToken:String, projectName:String, root:JsonObject) {
 
             if(Objects.nonNull(projectName)){
                 root.remove("Token")
                 var listofcommand = ""
                 val commandList:MutableList<String> = mutableListOf()
-                println(root)
-                println(root.size())
 
                 val apis = root["apis"].asJsonArray
                 val types = root["types"].asJsonArray
 
-                println(apis)
-                println(types)
                 listofcommand += "Available Apis"
                 for (api in apis) {
                     val apiInfo = api.asJsonObject
-                    println(api)
                     val apiName = apiInfo.keySet().iterator().next()
                     val apiParameters = apiInfo[apiName].asJsonObject
                     registerGetEndpoint(
@@ -48,7 +43,7 @@ class HttpEndpointHandler {
                         apiParameters.toString()
                     )
                     registerPostEndpoint(projectName, apiName,
-                        apiParameters.getAsJsonArray("parameters"))
+                        apiParameters.getAsJsonArray("parameters"), serverToken)
                     listofcommand += "\n$apiName"
                 }
 
@@ -67,7 +62,6 @@ class HttpEndpointHandler {
         }
 
         private fun registerGetEndpoint(path:String, targetResponse:String){
-            println("registered get endpoint : {$path}")
             Spark.get(path) { _, response ->
                 response.type("application/json")
                 response.status(200)
@@ -75,14 +69,11 @@ class HttpEndpointHandler {
             }
         }
 
-        private fun registerPostEndpoint(projectName: String, apiName:String, reservedParameters:JsonArray){
-            println("registered Post endpoint : {/$projectName/${apiName}}")
+        private fun registerPostEndpoint(projectName: String, apiName:String, reservedParameters:JsonArray, serverToken: String){
             Spark.post("/$projectName/${apiName}") { request, response ->
                 val requestMessage = JsonParser.parseString(request.body().toString()).asJsonObject
                 val requestParams = requestMessage["Parameters"].asJsonArray
                 val parameters = JsonArray()
-                println("Post Request : $requestParams")
-                println(request.ip())
                 for (i in 0 until reservedParameters.size()){
                     //ith request param
                     parameters.add(requestParams.get(i))
@@ -99,14 +90,14 @@ class HttpEndpointHandler {
                     response.status(200)
                     res
                 }else{
-                    removeEndpoints(projectName)
+                    removeEndpoints(projectName, serverToken)
                     Spark.halt(404)
                 }
             }
         }
 
         //when disconnect socket
-        fun removeEndpoints(projectName: String){
+        fun removeEndpoints(projectName: String, serverToken:String){
             val commandList = routeMap[projectName]
             if (commandList != null) {
                 for(element in commandList){
@@ -122,7 +113,7 @@ class HttpEndpointHandler {
                     headers[HttpHeaderNames.CONTENT_TYPE] = HttpHeaderValues.APPLICATION_JSON
                 }
                 .delete()
-                .uri("${TeriserConnectionServer.serverAddress}?projectName")
+                .uri("${TeriserConnectionServer.serverEndpoint}?projectName=$projectName&token=$serverToken")
                 .response().subscribe()
         }
 
